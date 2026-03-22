@@ -7,7 +7,6 @@ import {
   IconTerminal2,
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useInstances, type InstanceAction, type InstanceRow } from '@/hooks/useInstances'
 
@@ -89,90 +88,87 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
 
   return (
     <>
-      <div className="space-y-6">
-        <Card className="border-slate-300/70 bg-white/90 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80">
-          <CardHeader className="gap-3 md:flex md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Instances</CardTitle>
-              <CardDescription>View status, controls, and logs for your instances.</CardDescription>
-            </div>
-            <Button type="button" variant="outline" onClick={() => void loadInstances()} disabled={isLoading}>
-              <IconRefresh className={isLoading ? 'animate-spin' : ''} />
-              Refresh
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {errorMessage ? (
-              <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
-            ) : null}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold">Instances</h1>
+            <p className="text-sm text-muted-foreground">View status, controls, and logs for your instances.</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => void loadInstances()} disabled={isLoading}>
+            <IconRefresh className={isLoading ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
+        </div>
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80 dark:border-zinc-700 dark:bg-zinc-950/50">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="bg-slate-100/80 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-200">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Name</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium">Backend</th>
-                    <th className="px-3 py-2 font-medium">Model</th>
-                    <th className="px-3 py-2 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.length === 0 ? (
-                    <tr>
-                      <td className="px-3 py-6 text-muted-foreground" colSpan={5}>
-                        {isLoading ? 'Loading instances...' : 'No instances found'}
+        {errorMessage ? (
+          <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+        ) : null}
+
+        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+            <thead className="bg-muted/60 text-foreground/80">
+              <tr>
+                <th className="px-3 py-2 font-medium">Name</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+                <th className="px-3 py-2 font-medium">Backend</th>
+                <th className="px-3 py-2 font-medium">Model</th>
+                <th className="px-3 py-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td className="px-3 py-6 text-muted-foreground" colSpan={5}>
+                    {isLoading ? 'Loading instances...' : 'No instances found'}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((instance) => {
+                  const status = statusMeta(instance)
+                  return (
+                    <tr key={instance.name} className="border-t border-border/80 align-top">
+                      <td className="px-3 py-3 font-medium text-foreground">{instance.name}</td>
+                      <td className="px-3 py-3 text-foreground/90">
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            className={`size-2.5 rounded-full ${status.dotClassName}`}
+                            aria-label={`Status ${status.label}`}
+                            title={status.label}
+                          />
+                          <span>{status.label}</span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-foreground/90">{instance.backend}</td>
+                      <td className="px-3 py-3 text-foreground/90">{instance.model}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {instance.availableActions.map((action) => {
+                            const metadata = actionMeta[action]
+                            const Icon = metadata.icon
+                            return (
+                              <Button
+                                key={`${instance.name}:${action}`}
+                                size="sm"
+                                type="button"
+                                variant={action === 'logs' ? 'outline' : 'secondary'}
+                                disabled={activeActionKey !== ''}
+                                onClick={() => void handleAction(instance.name, action)}
+                              >
+                                <Icon />
+                                {activeActionKey === `${instance.name}:${action}` ? 'Working...' : metadata.label}
+                              </Button>
+                            )
+                          })}
+                        </div>
                       </td>
                     </tr>
-                  ) : (
-                    rows.map((instance) => {
-                      const status = statusMeta(instance)
-                      return (
-                        <tr key={instance.name} className="border-t border-slate-200/80 align-top">
-                          <td className="px-3 py-3 font-medium text-slate-900 dark:text-zinc-100">{instance.name}</td>
-                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">
-                            <span className="inline-flex items-center gap-2">
-                              <span
-                                className={`size-2.5 rounded-full ${status.dotClassName}`}
-                                aria-label={`Status ${status.label}`}
-                                title={status.label}
-                              />
-                              <span>{status.label}</span>
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">{instance.backend}</td>
-                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">{instance.model}</td>
-                          <td className="px-3 py-2">
-                            <div className="flex flex-wrap gap-1.5">
-                              {instance.availableActions.map((action) => {
-                                const metadata = actionMeta[action]
-                                const Icon = metadata.icon
-                                return (
-                                  <Button
-                                    key={`${instance.name}:${action}`}
-                                    size="sm"
-                                    type="button"
-                                    variant={action === 'logs' ? 'outline' : 'secondary'}
-                                    disabled={activeActionKey !== ''}
-                                    onClick={() => void handleAction(instance.name, action)}
-                                  >
-                                    <Icon />
-                                    {activeActionKey === `${instance.name}:${action}` ? 'Working...' : metadata.label}
-                                  </Button>
-                                )
-                              })}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <Dialog open={isLogsModalOpen} onOpenChange={setIsLogsModalOpen}>
         <DialogContent className="w-[calc(100vw-1rem)] max-h-[90vh] max-w-[calc(100vw-1rem)] overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)] lg:max-w-[min(96vw,120rem)]">

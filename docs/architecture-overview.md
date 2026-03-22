@@ -16,6 +16,10 @@ Included:
 - API key management
   - List/get/create/delete keys
   - View key permissions
+- User management and login
+  - Local username/password login
+  - JWT access tokens and refresh token rotation
+  - Initial admin bootstrap at first startup
 
 Not in MVP:
 - Model cache/download workflows
@@ -94,11 +98,32 @@ Boundary 2: Proxy <-> llamactl
 
 Current direction:
 - Per-user auth at proxy layer.
-- Start with local user/session mechanism suitable for self-hosted environments.
+- Local JWT auth for MVP (self-hosted friendly).
+- Role-based authorization in backend handlers (for example `admin`, `operator`, `viewer`).
+
+JWT model for MVP:
+- Short-lived access token for API calls.
+- Longer-lived refresh token with rotation and revocation support.
+- Tokens signed with server-managed secret key.
+- Refresh tokens persisted server-side (hashed) for revocation and audit.
 
 Future direction:
 - Swap identity provider to JWT/OAuth without changing frontend route contracts.
 - Preserve same authorization checks in backend handlers.
+
+### Startup Admin Bootstrap
+
+At server startup, if no users exist:
+- Generate a cryptographically secure random admin password.
+- Create a default `admin` account with that password (stored as password hash only).
+- Emit the password once as a bootstrap secret and instruct immediate password change.
+- Mark account state as "must rotate password" before regular use.
+
+Operational safeguards:
+- Never persist plaintext bootstrap password in database.
+- Redact bootstrap password from structured logs after initial one-time output.
+- Allow optional override via environment variable for fully automated installs.
+- Fail startup if password generation source is unavailable.
 
 ## API Design Principles
 
@@ -148,7 +173,11 @@ Expected backend configuration variables:
 - `PORT`: Proxy listen port.
 - `LLAMACTL_BASE_URL`: Upstream llamactl base URL.
 - `LLAMACTL_MANAGEMENT_API_KEY`: Upstream management key (secret).
-- `APP_AUTH_SECRET`: Signing/encryption secret for app auth sessions/tokens.
+- `APP_JWT_SIGNING_KEY`: Signing key for JWT access and refresh tokens.
+- `APP_JWT_ACCESS_TTL`: Access token lifetime (for example `15m`).
+- `APP_JWT_REFRESH_TTL`: Refresh token lifetime (for example `7d`).
+- `BOOTSTRAP_ADMIN_USERNAME`: Optional initial admin username override (default `admin`).
+- `BOOTSTRAP_ADMIN_PASSWORD`: Optional bootstrap password override for non-interactive provisioning.
 - `CORS_ALLOWED_ORIGIN`: Frontend origin allowed to call proxy.
 
 ## Security Baseline
@@ -158,6 +187,9 @@ Expected backend configuration variables:
 - Enforce request size limits.
 - Apply conservative upstream timeout defaults.
 - Return generic auth errors to clients.
+- Store password hashes with Argon2id and per-password salt.
+- Hash persisted refresh tokens and track token family for rotation/reuse detection.
+- Require password rotation for bootstrap admin on first login.
 
 ## Observability Baseline
 
@@ -173,6 +205,8 @@ Expected backend configuration variables:
 
 Backend:
 - Unit tests for auth middleware and authorization checks.
+- Unit tests for JWT issuance, validation, refresh rotation, and revocation.
+- Unit tests for bootstrap admin generation and forced password rotation state.
 - Handler tests for route forwarding and error translation.
 - Upstream client tests for timeout and retry behavior.
 
@@ -208,8 +242,9 @@ End-to-end:
 
 ## Next Implementation Milestones
 
-1. Scaffold backend service and define route contracts for instances and keys.
-2. Scaffold frontend app with shadcn UI shell and navigation.
-3. Implement first vertical slice: list instances + start/stop actions.
-4. Implement key management page and create/delete actions.
-5. Add tests and compose-based smoke workflow.
+1. Scaffold backend service with local JWT auth, user store, and bootstrap admin flow.
+2. Define protected route contracts for instances and keys plus auth endpoints (`/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/users/*`).
+3. Scaffold frontend app with shadcn UI shell, login page, and auth-aware navigation.
+4. Implement first vertical slice: list instances + start/stop actions behind auth.
+5. Implement key management page and basic user management (admin creates/updates users, role assignment, password reset flow).
+6. Add tests and compose-based smoke workflow.

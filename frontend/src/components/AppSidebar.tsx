@@ -55,7 +55,7 @@ export function AppSidebar({ displayName, displayRole, onSignOut }: AppSidebarPr
   }, [])
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Management</SidebarGroupLabel>

@@ -25,9 +25,9 @@ function App() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="items-start">
       <AppSidebar displayName={displayName} displayRole={displayRole} onSignOut={signOut} />
-      <SidebarInset className="bg-[radial-gradient(circle_at_15%_10%,#fff7ed_0%,#f8fafc_45%,#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_15%_10%,#3f3f46_0%,#18181b_45%,#09090b_100%)]">
+      <SidebarInset className="min-w-0 self-start bg-background">
         <AppTopbar />
         <div className="flex-1 p-4 md:p-6">
           <Routes>

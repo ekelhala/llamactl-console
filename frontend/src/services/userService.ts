@@ -5,22 +5,21 @@ export type LoginRequest = {
   password: string
 }
 
+export type AuthenticatedUser = {
+  username?: string
+  role?: string
+}
+
 export type LoginResponse = {
   access_token: string
   refresh_token: string
   token_type: string
   expires_in: number
-  user?: {
-    username?: string
-    role?: string
-  }
+  user?: AuthenticatedUser
 }
 
 export type MeResponse = {
-  user?: {
-    username?: string
-    role?: string
-  }
+  user?: AuthenticatedUser
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {

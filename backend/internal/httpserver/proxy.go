@@ -27,7 +27,7 @@ func NewUpstreamProxy(cfg config.Config, logger *slog.Logger) http.Handler {
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
 		req.Host = target.Host
-		req.Header.Set("ApiKeyAuth", cfg.LlamactlManagementAPIKey)
+		req.Header.Set("Authorization", "Bearer "+cfg.LlamactlManagementAPIKey)
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, _ *http.Request, err error) {

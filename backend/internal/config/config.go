@@ -36,7 +36,7 @@ func LoadFromEnv() (Config, error) {
 	}
 
 	cfg := Config{
-		Port:                     getEnvOrDefault("PORT", "8080"),
+		Port:                     getEnvOrDefault("PORT", "8000"),
 		LlamactlBaseURL:          strings.TrimSpace(os.Getenv("LLAMACTL_BASE_URL")),
 		LlamactlManagementAPIKey: strings.TrimSpace(os.Getenv("LLAMACTL_MANAGEMENT_API_KEY")),
 		JWTSigningKey:            strings.TrimSpace(os.Getenv("APP_JWT_SIGNING_KEY")),

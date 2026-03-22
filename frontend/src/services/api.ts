@@ -32,6 +32,11 @@ async function parseApiError(response: Response): Promise<string> {
   return `request failed (${response.status})`
 }
 
+function isJSONResponse(response: Response): boolean {
+  const contentType = response.headers.get('Content-Type') || ''
+  return contentType.toLowerCase().includes('application/json')
+}
+
 export async function apiRequest<TResponse>(path: string, init?: RequestInit): Promise<TResponse> {
   const response = await fetch(buildApiUrl(path), init)
 
@@ -43,5 +48,9 @@ export async function apiRequest<TResponse>(path: string, init?: RequestInit): P
     return undefined as TResponse
   }
 
-  return (await response.json()) as TResponse
+  if (isJSONResponse(response)) {
+    return (await response.json()) as TResponse
+  }
+
+  return (await response.text()) as TResponse
 }

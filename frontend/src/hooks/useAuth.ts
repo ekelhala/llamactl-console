@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ApiServiceError } from '@/services/api'
-import { getCurrentUser, login } from '@/services/userService'
+import { getCurrentUser, login, logout } from '@/services/userService'
 import type { AuthenticatedUser } from '@/services/userService'
 
 export type SignInInput = {
@@ -16,6 +16,8 @@ export function useAuth() {
   const [errorMessage, setErrorMessage] = useState('')
   const [infoMessage, setInfoMessage] = useState('')
   const [user, setUser] = useState<AuthenticatedUser | null>(null)
+  const [accessToken, setAccessToken] = useState('')
+  const [refreshToken, setRefreshToken] = useState('')
 
   async function signIn(credentials: SignInInput) {
     setIsSubmitting(true)
@@ -39,10 +41,14 @@ export function useAuth() {
         authenticatedUser = { username: credentials.username }
       }
 
+      setAccessToken(loginData.access_token)
+      setRefreshToken(loginData.refresh_token)
       setUser(authenticatedUser)
       setStatus('authenticated')
     } catch (error) {
       setStatus('unauthenticated')
+      setAccessToken('')
+      setRefreshToken('')
       setUser(null)
 
       if (error instanceof ApiServiceError) {
@@ -55,8 +61,20 @@ export function useAuth() {
     }
   }
 
-  function signOut() {
+  async function signOut() {
+    const tokenToRevoke = refreshToken
+
+    if (tokenToRevoke) {
+      try {
+        await logout({ refresh_token: tokenToRevoke })
+      } catch {
+        // Always clear local auth state even if backend logout fails.
+      }
+    }
+
     setStatus('unauthenticated')
+    setAccessToken('')
+    setRefreshToken('')
     setUser(null)
     setErrorMessage('')
     setInfoMessage('')
@@ -68,6 +86,7 @@ export function useAuth() {
     errorMessage,
     infoMessage,
     user,
+    accessToken,
     signIn,
     signOut,
   }

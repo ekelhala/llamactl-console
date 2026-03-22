@@ -1,40 +1,43 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AppSidebar } from '@/components/AppSidebar'
+import { AppTopbar } from '@/components/AppTopbar'
 import { LoginForm } from '@/components/LoginForm'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAuth } from '@/hooks/useAuth'
+import { ApiKeysPage } from '@/pages/ApiKeysPage'
+import { InstancesPage } from '@/pages/InstancesPage'
 
 function App() {
-  const { status, isSubmitting, errorMessage, infoMessage, user, signIn, signOut } = useAuth()
+  const { status, isSubmitting, errorMessage, user, accessToken, signIn, signOut } = useAuth()
 
   const isAuthenticated = status === 'authenticated'
   const displayName = user?.username || 'unknown user'
   const displayRole = user?.role ? ` (${user.role})` : ''
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(120deg,#f6f4ee_0%,#f0ebe2_45%,#e7ddd0_100%)] px-4 py-8 text-foreground">
-      <section className="w-full max-w-md">
-        {isAuthenticated ? (
-          <Card className="border-stone-300/70 bg-white/90 shadow-xl backdrop-blur">
-            <CardHeader>
-              <CardTitle>Signed In</CardTitle>
-              <CardDescription>{`Authenticated as ${displayName}${displayRole}`}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {infoMessage ? (
-                <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                  {infoMessage}
-                </p>
-              ) : null}
-              <Button className="w-full" type="button" variant="outline" onClick={signOut}>
-                Sign Out
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
+  if (!isAuthenticated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_20%_20%,#fef3c7_0%,#f9fafb_40%,#e2e8f0_100%)] px-4 py-8 text-foreground">
+        <section className="mx-auto w-full max-w-md">
           <LoginForm isSubmitting={isSubmitting} errorMessage={errorMessage} onSubmit={signIn} />
-        )}
-      </section>
-    </main>
+        </section>
+      </main>
+    )
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="bg-[radial-gradient(circle_at_15%_10%,#fff7ed_0%,#f8fafc_45%,#e2e8f0_100%)]">
+        <AppTopbar displayName={displayName} displayRole={displayRole} onSignOut={signOut} />
+        <div className="flex-1 p-4 md:p-6">
+          <Routes>
+            <Route path="/instances" element={<InstancesPage accessToken={accessToken} />} />
+            <Route path="/api-keys" element={<ApiKeysPage />} />
+            <Route path="*" element={<Navigate to="/instances" replace />} />
+          </Routes>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 

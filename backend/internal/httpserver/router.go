@@ -19,9 +19,10 @@ func NewRouter(health *handlers.HealthHandler, authHandler *auth.HTTPHandler, pr
 	r.Post("/api/auth/logout", authHandler.Logout)
 	r.With(authHandler.RequireAccessToken).Get("/api/auth/me", authHandler.Me)
 
-	// Keep upstream route contracts intact for versioned API routes.
-	r.With(authHandler.RequireAccessToken).Handle("/api/v1", proxy)
-	r.With(authHandler.RequireAccessToken).Handle("/api/v1/*", proxy)
+	// Proxy all non-reserved /api routes through auth to preserve pass-through behavior
+	// while keeping explicit auth and health endpoints managed locally.
+	r.With(authHandler.RequireAccessToken).Handle("/api", proxy)
+	r.With(authHandler.RequireAccessToken).Handle("/api/*", proxy)
 
 	return r
 }

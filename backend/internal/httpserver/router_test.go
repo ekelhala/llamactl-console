@@ -24,7 +24,7 @@ func TestProtectedProxyRequiresAccessToken(t *testing.T) {
 
 	router := NewRouter(health, authHandler, proxy)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/instances", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v2/instances", nil)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -71,7 +71,7 @@ func TestLoginThenCallProtectedProxy(t *testing.T) {
 		t.Fatal("expected access token in login response")
 	}
 
-	protectedReq := httptest.NewRequest(http.MethodGet, "/api/v1/instances", nil)
+	protectedReq := httptest.NewRequest(http.MethodGet, "/api/v2/instances", nil)
 	protectedReq.Header.Set("Authorization", "Bearer "+loginResp.AccessToken)
 	protectedRec := httptest.NewRecorder()
 	router.ServeHTTP(protectedRec, protectedReq)
@@ -81,6 +81,60 @@ func TestLoginThenCallProtectedProxy(t *testing.T) {
 	}
 	if !proxyCalled {
 		t.Fatal("expected proxy to be called with valid access token")
+	}
+}
+
+func TestPublicHealthRouteBypassesProxyAuth(t *testing.T) {
+	authHandler := testAuthHandler(t)
+	health := handlers.NewHealthHandler(time.Now())
+
+	proxyCalled := false
+	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		proxyCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	router := NewRouter(health, authHandler, proxy)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected health status 200, got %d", rec.Code)
+	}
+	if proxyCalled {
+		t.Fatal("proxy should not be called for health route")
+	}
+}
+
+func TestPublicLoginRouteBypassesProxyAuth(t *testing.T) {
+	authHandler := testAuthHandler(t)
+	health := handlers.NewHealthHandler(time.Now())
+
+	proxyCalled := false
+	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		proxyCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	router := NewRouter(health, authHandler, proxy)
+
+	loginBody := map[string]string{
+		"username": "admin",
+		"password": "bootstrap-pass",
+	}
+	body, _ := json.Marshal(loginBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected login status 200, got %d", rec.Code)
+	}
+	if proxyCalled {
+		t.Fatal("proxy should not be called for login route")
 	}
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -21,7 +21,7 @@ export function LoginForm({ isSubmitting, errorMessage, onSubmit }: LoginFormPro
   }
 
   return (
-    <Card className="border-stone-300/70 bg-white/90 shadow-xl backdrop-blur">
+    <Card className="border-stone-300/70 bg-white/90 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80">
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
       </CardHeader>

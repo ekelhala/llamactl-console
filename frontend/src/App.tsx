@@ -16,7 +16,7 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_20%_20%,#fef3c7_0%,#f9fafb_40%,#e2e8f0_100%)] px-4 py-8 text-foreground">
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_20%_20%,#fef3c7_0%,#f9fafb_40%,#e2e8f0_100%)] px-4 py-8 text-foreground dark:bg-[radial-gradient(circle_at_20%_20%,#3f3f46_0%,#18181b_50%,#09090b_100%)]">
         <section className="mx-auto w-full max-w-md">
           <LoginForm isSubmitting={isSubmitting} errorMessage={errorMessage} onSubmit={signIn} />
         </section>
@@ -27,7 +27,7 @@ function App() {
   return (
     <SidebarProvider>
       <AppSidebar displayName={displayName} displayRole={displayRole} onSignOut={signOut} />
-      <SidebarInset className="bg-[radial-gradient(circle_at_15%_10%,#fff7ed_0%,#f8fafc_45%,#e2e8f0_100%)]">
+      <SidebarInset className="bg-[radial-gradient(circle_at_15%_10%,#fff7ed_0%,#f8fafc_45%,#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_15%_10%,#3f3f46_0%,#18181b_45%,#09090b_100%)]">
         <AppTopbar />
         <div className="flex-1 p-4 md:p-6">
           <Routes>

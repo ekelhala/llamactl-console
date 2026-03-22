@@ -90,7 +90,7 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
   return (
     <>
       <div className="space-y-6">
-        <Card className="border-slate-300/70 bg-white/90 shadow-xl backdrop-blur">
+        <Card className="border-slate-300/70 bg-white/90 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80">
           <CardHeader className="gap-3 md:flex md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Instances</CardTitle>
@@ -106,9 +106,9 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
               <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
             ) : null}
 
-            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80">
+            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white/80 dark:border-zinc-700 dark:bg-zinc-950/50">
               <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="bg-slate-100/80 text-slate-700">
+                <thead className="bg-slate-100/80 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-200">
                   <tr>
                     <th className="px-3 py-2 font-medium">Name</th>
                     <th className="px-3 py-2 font-medium">Status</th>
@@ -129,8 +129,8 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
                       const status = statusMeta(instance)
                       return (
                         <tr key={instance.name} className="border-t border-slate-200/80 align-top">
-                          <td className="px-3 py-3 font-medium text-slate-900">{instance.name}</td>
-                          <td className="px-3 py-3 text-slate-700">
+                          <td className="px-3 py-3 font-medium text-slate-900 dark:text-zinc-100">{instance.name}</td>
+                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">
                             <span className="inline-flex items-center gap-2">
                               <span
                                 className={`size-2.5 rounded-full ${status.dotClassName}`}
@@ -140,8 +140,8 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
                               <span>{status.label}</span>
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-slate-700">{instance.backend}</td>
-                          <td className="px-3 py-3 text-slate-700">{instance.model}</td>
+                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">{instance.backend}</td>
+                          <td className="px-3 py-3 text-slate-700 dark:text-zinc-200">{instance.model}</td>
                           <td className="px-3 py-2">
                             <div className="flex flex-wrap gap-1.5">
                               {instance.availableActions.map((action) => {
@@ -188,15 +188,15 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
             ) : null}
             <div
               ref={logsViewportRef}
-              className="h-[calc(100dvh-9rem)] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
+              className="h-[calc(100dvh-9rem)] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900"
             >
               {logsText ? (
                 <div className="overflow-x-auto overscroll-x-contain touch-pan-x pb-3 [webkit-overflow-scrolling:touch]">
-                  <table className="w-max min-w-max border-collapse text-xs font-mono text-slate-800 dark:text-slate-100">
+                  <table className="w-max min-w-max border-collapse text-xs font-mono text-slate-800 dark:text-zinc-100">
                     <tbody>
                       {logLines.map((line, index) => (
-                        <tr key={`${index}:${line.slice(0, 24)}`} className="align-top even:bg-slate-100/60 dark:even:bg-slate-800/40">
-                          <td className="sticky left-0 z-10 select-none border-r border-slate-200 bg-slate-100 px-2 py-1 text-right text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                        <tr key={`${index}:${line.slice(0, 24)}`} className="align-top border-t border-transparent even:bg-slate-100/60 dark:even:bg-zinc-800/40">
+                          <td className="sticky left-0 z-10 select-none border-r border-slate-200 bg-slate-100 px-2 py-1 text-right text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                             {index + 1}
                           </td>
                           <td className="px-3 py-1 whitespace-pre">{line || ' '}</td>
@@ -206,7 +206,7 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
                   </table>
                 </div>
               ) : (
-                <p className="p-3 text-xs text-slate-600 dark:text-slate-300">
+                <p className="p-3 text-xs text-slate-600 dark:text-zinc-300">
                   No logs loaded yet. Select an instance and click Logs.
                 </p>
               )}

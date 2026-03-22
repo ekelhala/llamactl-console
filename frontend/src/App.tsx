@@ -4,37 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-type LoginResponse = {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  expires_in: number
-  user?: {
-    username?: string
-    role?: string
-  }
-}
-
-type MeResponse = {
-  user?: {
-    username?: string
-    role?: string
-  }
-}
-
-async function parseErrorMessage(response: Response): Promise<string> {
-  try {
-    const data = (await response.json()) as { error?: string }
-    if (data.error) {
-      return data.error
-    }
-  } catch {
-    // Ignore non-JSON error responses.
-  }
-
-  return `request failed (${response.status})`
-}
+import { ApiServiceError } from '@/services/api'
+import { getCurrentUser, login } from '@/services/userService'
 
 function App() {
   const [username, setUsername] = useState('admin')
@@ -50,41 +21,22 @@ function App() {
     setSuccessMessage('')
 
     try {
-      const loginResponse = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      })
+      const loginData = await login({ username, password })
 
-      if (!loginResponse.ok) {
-        setErrorMessage(await parseErrorMessage(loginResponse))
-        return
-      }
-
-      const loginData = (await loginResponse.json()) as LoginResponse
-
-      const meResponse = await fetch('/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${loginData.access_token}`,
-        },
-      })
-
-      if (!meResponse.ok) {
+      try {
+        const meData = await getCurrentUser(loginData.access_token)
+        const displayName = meData.user?.username || username
+        const displayRole = meData.user?.role ? ` (${meData.user.role})` : ''
+        setSuccessMessage(`login verified as ${displayName}${displayRole}`)
+      } catch {
         setSuccessMessage('login succeeded, but /api/auth/me verification failed')
-        return
       }
-
-      const meData = (await meResponse.json()) as MeResponse
-      const displayName = meData.user?.username || username
-      const displayRole = meData.user?.role ? ` (${meData.user.role})` : ''
-      setSuccessMessage(`login verified as ${displayName}${displayRole}`)
-    } catch {
-      setErrorMessage('network error while contacting backend')
+    } catch (error) {
+      if (error instanceof ApiServiceError) {
+        setErrorMessage(error.message)
+      } else {
+        setErrorMessage('network error while contacting backend')
+      }
     } finally {
       setIsSubmitting(false)
     }

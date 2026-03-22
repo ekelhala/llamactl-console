@@ -67,7 +67,7 @@ Non-responsibilities:
 Responsibilities:
 - Authenticate app users.
 - Authorize allowed actions.
-- Forward supported API calls to llamactl.
+- Forward approved API calls to llamactl without rewriting route paths.
 - Add upstream `ApiKeyAuth` header from server-side configuration.
 - Normalize upstream errors into stable frontend-safe responses.
 - Emit structured logs and health endpoints.
@@ -128,30 +128,29 @@ Operational safeguards:
 ## API Design Principles
 
 - Prefix all proxy endpoints under `/api`.
-- Keep frontend contract stable even if upstream payloads change.
+- Keep proxy paths identical to upstream paths where possible (no per-route translation layer).
 - Translate upstream errors (400/404/409/500) into consistent error envelope.
 - Pass through only required headers and request bodies.
-- Explicitly block unknown or out-of-scope endpoints.
+- Reserve only operational endpoints such as `/api/health*`; forward other `/api/*` routes as-is.
 
 Example endpoint groups:
-- `/api/instances/*`
-- `/api/keys/*`
+- `/api/v1/*` (proxied to upstream with unchanged path)
 - `/api/health`
 
 ## Request Flow Examples
 
 ### Start Instance
 
-1. Frontend sends `POST /api/instances/{name}/start` to proxy.
+1. Frontend sends `POST /api/v1/instances/{name}/start` to proxy.
 2. Proxy authenticates user and checks authorization.
-3. Proxy forwards to llamactl `POST /api/v1/instances/{name}/start` with `ApiKeyAuth`.
+3. Proxy forwards the same method, path, and query to llamactl with `ApiKeyAuth`.
 4. Proxy returns normalized response to frontend.
 
 ### Create API Key
 
-1. Frontend sends `POST /api/keys` with key options.
+1. Frontend sends `POST /api/v1/auth/keys` with key options.
 2. Proxy validates request and user permission.
-3. Proxy forwards to llamactl `POST /api/v1/auth/keys` with `ApiKeyAuth`.
+3. Proxy forwards the same method, path, and query to llamactl with `ApiKeyAuth`.
 4. Proxy returns created key metadata to frontend.
 
 ## Deployment Topology
@@ -238,12 +237,12 @@ End-to-end:
 - Auth complexity growth:
   - Mitigation: keep auth interface and middleware pluggable from day one.
 - Proxy becoming a generic tunnel:
-  - Mitigation: allowlist endpoints and methods explicitly.
+  - Mitigation: keep strict authz checks and explicit exemptions while preserving path pass-through.
 
 ## Next Implementation Milestones
 
 1. Scaffold backend service with local JWT auth, user store, and bootstrap admin flow.
-2. Define protected route contracts for instances and keys plus auth endpoints (`/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/users/*`).
+2. Define protected auth endpoints (`/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/users/*`) and enforce permissions on pass-through `/api/v1/*` routes.
 3. Scaffold frontend app with shadcn UI shell, login page, and auth-aware navigation.
 4. Implement first vertical slice: list instances + start/stop actions behind auth.
 5. Implement key management page and basic user management (admin creates/updates users, role assignment, password reset flow).

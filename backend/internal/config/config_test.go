@@ -10,7 +10,7 @@ import (
 func TestLoadFromEnvSuccess(t *testing.T) {
 	t.Setenv("LLAMACTL_BASE_URL", "http://localhost:9090")
 	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
-	t.Setenv("APP_JWT_SIGNING_KEY", "secret")
+	t.Setenv("APP_JWT_SIGNING_KEY", "01234567890123456789012345678901")
 	t.Setenv("APP_JWT_ACCESS_TTL", "20m")
 	t.Setenv("APP_JWT_REFRESH_TTL", "240h")
 
@@ -46,7 +46,7 @@ func TestLoadFromEnvReadsDotEnvFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	dotEnv := "LLAMACTL_BASE_URL=http://localhost:7000\n" +
 		"LLAMACTL_MANAGEMENT_API_KEY=dotenv-key\n" +
-		"APP_JWT_SIGNING_KEY=dotenv-secret\n"
+		"APP_JWT_SIGNING_KEY=01234567890123456789012345678901\n"
 	if err := os.WriteFile(filepath.Join(tmpDir, ".env"), []byte(dotEnv), 0o600); err != nil {
 		t.Fatalf("failed to write .env file: %v", err)
 	}

@@ -72,6 +72,9 @@ func validate(cfg Config) error {
 	if cfg.JWTSigningKey == "" {
 		missing = append(missing, "APP_JWT_SIGNING_KEY")
 	}
+	if cfg.JWTSigningKey != "" && len(cfg.JWTSigningKey) < 32 {
+		return errors.New("APP_JWT_SIGNING_KEY must be at least 32 characters")
+	}
 	if cfg.JWTAccessTTL <= 0 {
 		return errors.New("APP_JWT_ACCESS_TTL must be greater than zero")
 	}

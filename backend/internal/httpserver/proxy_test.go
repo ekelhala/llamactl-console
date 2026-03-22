@@ -17,13 +17,13 @@ func TestNewUpstreamProxyForwardsPathAndQuery(t *testing.T) {
 	var gotPath string
 	var gotQuery string
 	var gotMethod string
-	var gotAPIKey string
+	var gotAuthorization string
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		gotQuery = r.URL.RawQuery
 		gotMethod = r.Method
-		gotAPIKey = r.Header.Get("ApiKeyAuth")
+		gotAuthorization = r.Header.Get("Authorization")
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(`{"ok":true}`))
 	}))
@@ -38,6 +38,7 @@ func TestNewUpstreamProxyForwardsPathAndQuery(t *testing.T) {
 	proxy := NewUpstreamProxy(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/instances/demo/start?tail=10&follow=true", nil)
+	req.Header.Set("Authorization", "Bearer user-access-token")
 	rec := httptest.NewRecorder()
 
 	proxy.ServeHTTP(rec, req)
@@ -54,7 +55,7 @@ func TestNewUpstreamProxyForwardsPathAndQuery(t *testing.T) {
 	if gotQuery != "tail=10&follow=true" {
 		t.Fatalf("expected query to remain unchanged, got %s", gotQuery)
 	}
-	if gotAPIKey != apiKey {
-		t.Fatalf("expected ApiKeyAuth header %q, got %q", apiKey, gotAPIKey)
+	if gotAuthorization != "Bearer "+apiKey {
+		t.Fatalf("expected Authorization header %q, got %q", "Bearer "+apiKey, gotAuthorization)
 	}
 }

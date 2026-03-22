@@ -45,7 +45,7 @@ flowchart LR
 
   U --> F
   F -->|HTTP /api/*| B
-  B -->|ApiKeyAuth header| L
+  B -->|Authorization: Bearer <management-key>| L
 ```
 
 ## Core Components
@@ -68,7 +68,7 @@ Responsibilities:
 - Authenticate app users.
 - Authorize allowed actions.
 - Forward approved API calls to llamactl without rewriting route paths.
-- Add upstream `ApiKeyAuth` header from server-side configuration.
+- Add upstream `Authorization: Bearer <management-key>` header from server-side configuration.
 - Normalize upstream errors into stable frontend-safe responses.
 - Emit structured logs and health endpoints.
 
@@ -143,14 +143,14 @@ Example endpoint groups:
 
 1. Frontend sends `POST /api/v1/instances/{name}/start` to proxy.
 2. Proxy authenticates user and checks authorization.
-3. Proxy forwards the same method, path, and query to llamactl with `ApiKeyAuth`.
+3. Proxy forwards the same method, path, and query to llamactl with `Authorization: Bearer <management-key>`.
 4. Proxy returns normalized response to frontend.
 
 ### Create API Key
 
 1. Frontend sends `POST /api/v1/auth/keys` with key options.
 2. Proxy validates request and user permission.
-3. Proxy forwards the same method, path, and query to llamactl with `ApiKeyAuth`.
+3. Proxy forwards the same method, path, and query to llamactl with `Authorization: Bearer <management-key>`.
 4. Proxy returns created key metadata to frontend.
 
 ## Deployment Topology

@@ -94,7 +94,7 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
           <CardHeader className="gap-3 md:flex md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Instances</CardTitle>
-              <CardDescription>Status-aware actions are rendered strictly from current instance state.</CardDescription>
+              <CardDescription>View status, controls, and logs for your instances.</CardDescription>
             </div>
             <Button type="button" variant="outline" onClick={() => void loadInstances()} disabled={isLoading}>
               <IconRefresh className={isLoading ? 'animate-spin' : ''} />
@@ -121,7 +121,7 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
                   {rows.length === 0 ? (
                     <tr>
                       <td className="px-3 py-6 text-muted-foreground" colSpan={5}>
-                        {isLoading ? 'Loading instances...' : 'No instances returned by API'}
+                        {isLoading ? 'Loading instances...' : 'No instances found'}
                       </td>
                     </tr>
                   ) : (
@@ -178,7 +178,7 @@ export function InstancesPage({ accessToken }: InstancesPageProps) {
         <DialogContent className="w-[calc(100vw-1rem)] max-h-[90vh] max-w-[calc(100vw-1rem)] overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)] lg:max-w-[min(96vw,120rem)]">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>{selectedLogsName ? `Logs: ${selectedLogsName}` : 'Instance Logs'}</DialogTitle>
-            <DialogDescription>Output from GET /api/v1/instances/{'{name}'}/logs</DialogDescription>
+            <DialogDescription>Recent output from the selected instance.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 px-4 pb-4 sm:px-6 sm:pb-6">

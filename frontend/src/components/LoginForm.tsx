@@ -24,7 +24,6 @@ export function LoginForm({ isSubmitting, errorMessage, onSubmit }: LoginFormPro
     <Card className="border-stone-300/70 bg-white/90 shadow-xl backdrop-blur">
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
-        <CardDescription>Test login against the local proxy backend</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>

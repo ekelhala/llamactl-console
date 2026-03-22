@@ -1,20 +1,12 @@
-import { IconLogout } from '@tabler/icons-react'
 import { useLocation } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-
-type AppTopbarProps = {
-  displayName: string
-  displayRole: string
-  onSignOut: () => Promise<void>
-}
 
 const routeTitles: Record<string, string> = {
   '/instances': 'Instances',
   '/api-keys': 'API Keys',
 }
 
-export function AppTopbar({ displayName, displayRole, onSignOut }: AppTopbarProps) {
+export function AppTopbar() {
   const location = useLocation()
   const title = routeTitles[location.pathname] || 'Dashboard'
 
@@ -23,12 +15,7 @@ export function AppTopbar({ displayName, displayRole, onSignOut }: AppTopbarProp
       <SidebarTrigger />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="truncate text-xs text-slate-500">{displayName}{displayRole}</p>
       </div>
-      <Button type="button" variant="outline" size="sm" onClick={() => void onSignOut()}>
-        <IconLogout />
-        Sign Out
-      </Button>
     </header>
   )
 }

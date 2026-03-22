@@ -26,9 +26,9 @@ function App() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar displayName={displayName} displayRole={displayRole} onSignOut={signOut} />
       <SidebarInset className="bg-[radial-gradient(circle_at_15%_10%,#fff7ed_0%,#f8fafc_45%,#e2e8f0_100%)]">
-        <AppTopbar displayName={displayName} displayRole={displayRole} onSignOut={signOut} />
+        <AppTopbar />
         <div className="flex-1 p-4 md:p-6">
           <Routes>
             <Route path="/instances" element={<InstancesPage accessToken={accessToken} />} />

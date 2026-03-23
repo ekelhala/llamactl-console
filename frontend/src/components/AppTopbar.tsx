@@ -12,7 +12,11 @@ const routeTitles: Record<string, string> = {
 export function AppTopbar() {
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
-  const title = routeTitles[location.pathname] || 'Dashboard'
+  const title = location.pathname.endsWith('/logs')
+    ? 'Instance Logs'
+    : location.pathname.startsWith('/instances/')
+      ? 'Instance Settings'
+      : (routeTitles[location.pathname] || 'Dashboard')
   const isDark = theme === 'dark'
 
   return (

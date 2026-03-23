@@ -5,6 +5,8 @@ import { LoginForm } from '@/components/LoginForm'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAuth } from '@/hooks/useAuth'
 import { ApiKeysPage } from '@/pages/ApiKeysPage'
+import { InstanceDetailPage } from '@/pages/InstanceDetailPage'
+import { InstanceLogsPage } from '@/pages/InstanceLogsPage'
 import { InstancesPage } from '@/pages/InstancesPage'
 
 function App() {
@@ -32,6 +34,8 @@ function App() {
         <div className="flex-1 p-4 md:p-6">
           <Routes>
             <Route path="/instances" element={<InstancesPage accessToken={accessToken} />} />
+            <Route path="/instances/:name" element={<InstanceDetailPage accessToken={accessToken} />} />
+            <Route path="/instances/:name/logs" element={<InstanceLogsPage accessToken={accessToken} />} />
             <Route path="/api-keys" element={<ApiKeysPage />} />
             <Route path="*" element={<Navigate to="/instances" replace />} />
           </Routes>

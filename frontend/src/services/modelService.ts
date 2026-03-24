@@ -3,20 +3,13 @@ import { type CachedModel, type DownloadJob } from '@/types/model'
 
 export interface DownloadModelRequest {
   repo: string
-  tag?: string
 }
 
-type ListCachedModelsResponse =
-  | CachedModel[]
-  | {
-      models: CachedModel[]
-    }
-
-type DownloadModelResponse =
-  | DownloadJob
-  | {
-      job: DownloadJob
-    }
+type DownloadModelResponse = {
+  job_id: string
+  repo: string
+  tag?: string
+}
 
 type ListModelJobsResponse =
   | DownloadJob[]
@@ -46,11 +39,9 @@ function modelQuery(repo: string, tag?: string): string {
 }
 
 export async function listCachedModels(accessToken: string): Promise<CachedModel[]> {
-  const payload = await apiRequest<ListCachedModelsResponse>('/v1/backends/llama-cpp/models', {
+  return apiRequest<CachedModel[]>('/v1/backends/llama-cpp/models', {
     headers: authHeaders(accessToken),
   })
-
-  return Array.isArray(payload) ? payload : payload.models
 }
 
 export async function deleteCachedModel(accessToken: string, repo: string, tag?: string): Promise<void> {
@@ -67,10 +58,15 @@ export async function downloadModel(accessToken: string, request: DownloadModelR
       ...authHeaders(accessToken),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ request }),
+    body: JSON.stringify(request),
   })
 
-  return 'id' in payload ? payload : payload.job
+  return {
+    id: payload.job_id,
+    repo: payload.repo,
+    tag: payload.tag,
+    status: 'queued',
+  }
 }
 
 export async function listModelJobs(accessToken: string): Promise<DownloadJob[]> {

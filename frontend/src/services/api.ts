@@ -20,16 +20,34 @@ function buildApiUrl(path: string): string {
 }
 
 async function parseApiError(response: Response): Promise<string> {
+  const fallback = `request failed (${response.status})`
+
   try {
-    const data = (await response.json()) as ErrorResponse
-    if (data.error) {
-      return data.error
+    const raw = await response.text()
+    if (!raw.trim()) {
+      return fallback
     }
+
+    try {
+      const data = JSON.parse(raw) as ErrorResponse | string
+      if (typeof data === 'string' && data.trim() !== '') {
+        return data
+      }
+
+      if (typeof data === 'object' && data !== null && data.error) {
+        return data.error
+      }
+    } catch {
+      // Plain text error body.
+      return raw.trim()
+    }
+
+    return raw.trim() || fallback
   } catch {
     // Ignore invalid or empty error payloads.
   }
 
-  return `request failed (${response.status})`
+  return fallback
 }
 
 function isJSONResponse(response: Response): boolean {

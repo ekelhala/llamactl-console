@@ -26,6 +26,10 @@ export type LogoutRequest = {
   refresh_token?: string
 }
 
+export type RefreshRequest = {
+  refresh_token: string
+}
+
 export async function login(request: LoginRequest): Promise<LoginResponse> {
   return apiRequest<LoginResponse>('/auth/login', {
     method: 'POST',
@@ -41,6 +45,16 @@ export async function getCurrentUser(accessToken: string): Promise<MeResponse> {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+  })
+}
+
+export async function refreshAccessToken(request: RefreshRequest): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>('/auth/refresh', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
   })
 }
 

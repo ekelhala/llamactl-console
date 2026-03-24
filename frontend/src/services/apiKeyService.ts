@@ -53,7 +53,7 @@ export async function createApiKey(accessToken: string, request: CreateKeyReques
       ...authHeaders(accessToken),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ key: request }),
+    body: JSON.stringify(request),
   })
 }
 

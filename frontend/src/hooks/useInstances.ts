@@ -88,9 +88,10 @@ export function useInstances(accessToken: string): UseInstancesState {
     return [...instances]
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((instance) => {
-        const statusKind = normalizeStatus(instance.status)
+        const statusKind = normalizeStatus(instance.status ?? 'stopped')
         return {
           ...instance,
+          status: instance.status ?? 'stopped',
           statusKind,
           availableActions: actionsForStatus(statusKind),
         }

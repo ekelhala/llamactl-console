@@ -29,15 +29,17 @@ const actionMeta: Record<InstanceAction, { label: string; icon: ComponentType<{ 
 }
 
 function statusMeta(row: InstanceRow): StatusMeta {
+  const label = row.status || 'stopped'
+
   if (row.statusKind === 'running') {
-    return { label: row.status, dotClassName: 'bg-emerald-500' }
+    return { label, dotClassName: 'bg-emerald-500 animate-pulse [animation-duration:2.4s]' }
   }
 
   if (row.statusKind === 'stopped') {
-    return { label: row.status, dotClassName: 'bg-slate-400' }
+    return { label, dotClassName: 'bg-slate-400' }
   }
 
-  return { label: row.status, dotClassName: 'bg-amber-500 animate-pulse' }
+  return { label, dotClassName: 'bg-amber-500 animate-pulse' }
 }
 
 export function InstancesPage({ accessToken }: InstancesPageProps) {

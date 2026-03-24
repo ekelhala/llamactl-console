@@ -1,5 +1,5 @@
 import { apiRequest } from '@/services/api'
-import { type Instance } from '@/types/instance'
+import { type CreateInstanceOptions, type Instance } from '@/types/instance'
 
 type ListInstancesResponse =
   | Instance[]
@@ -63,6 +63,41 @@ export async function listInstances(accessToken: string): Promise<Instance[]> {
   return Array.isArray(payload) ? payload : payload.instances
 }
 
+export async function getInstance(accessToken: string, name: string): Promise<Instance> {
+  return apiRequest<Instance>(`/v1/instances/${encodeURIComponent(name)}`, {
+    headers: authHeaders(accessToken),
+  })
+}
+
+export async function createInstance(accessToken: string, name: string, options: CreateInstanceOptions): Promise<Instance> {
+  return apiRequest<Instance>(`/v1/instances/${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: {
+      ...authHeaders(accessToken),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(options),
+  })
+}
+
+export async function updateInstance(accessToken: string, name: string, options: CreateInstanceOptions): Promise<Instance> {
+  return apiRequest<Instance>(`/v1/instances/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: {
+      ...authHeaders(accessToken),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(options),
+  })
+}
+
+export async function deleteInstance(accessToken: string, name: string): Promise<void> {
+  await apiRequest<unknown>(`/v1/instances/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: authHeaders(accessToken),
+  })
+}
+
 async function postInstanceAction(accessToken: string, name: string, action: 'start' | 'stop' | 'restart'): Promise<void> {
   await apiRequest<unknown>(`/v1/instances/${encodeURIComponent(name)}/${action}`, {
     method: 'POST',
@@ -91,4 +126,20 @@ export async function getInstanceLogs(accessToken: string, name: string, lines =
   )
 
   return toLogText(payload, lines)
+}
+
+export async function proxyInstanceRequest(
+  accessToken: string,
+  name: string,
+  method: 'GET' | 'POST' = 'GET',
+  body?: unknown
+): Promise<string> {
+  return apiRequest<string>(`/v1/instances/${encodeURIComponent(name)}/proxy`, {
+    method,
+    headers: {
+      ...authHeaders(accessToken),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  })
 }

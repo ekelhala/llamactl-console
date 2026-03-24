@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Spinner } from '../components/ui/spinner'
 import { ApiServiceError } from '@/services/api'
-import { listInstances } from '@/services/instanceService'
+import { getInstance } from '@/services/instanceService'
 import { type CreateInstanceOptions, type Instance, type InstanceStatus } from '@/types/instance'
 
 type InstanceDetailPageProps = {
@@ -62,6 +63,67 @@ function readOptionString(options: CreateInstanceOptions | undefined, keys: stri
   return ''
 }
 
+function readOptionNumberString(options: CreateInstanceOptions | undefined, keys: string[], fallback: string): string {
+  if (!options) {
+    return fallback
+  }
+
+  for (const key of keys) {
+    const value = options[key]
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value)
+    }
+
+    if (typeof value === 'string' && value.trim() !== '') {
+      return value.trim()
+    }
+  }
+
+  return fallback
+}
+
+function readOptionBoolean(options: CreateInstanceOptions | undefined, keys: string[], fallback: boolean): boolean {
+  if (!options) {
+    return fallback
+  }
+
+  for (const key of keys) {
+    const value = options[key]
+
+    if (typeof value === 'boolean') {
+      return value
+    }
+
+    if (typeof value === 'number') {
+      return value !== 0
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase()
+      if (['true', '1', 'yes', 'on'].includes(normalized)) {
+        return true
+      }
+
+      if (['false', '0', 'no', 'off'].includes(normalized)) {
+        return false
+      }
+    }
+  }
+
+  return fallback
+}
+
+function settingsFromInstance(instance: Instance): InstanceSettings {
+  return {
+    backend: readOptionString(instance.options, ['backend', 'backend_type']),
+    model: readOptionString(instance.options, ['model', 'model_name']),
+    maxConcurrency: readOptionNumberString(instance.options, ['max_concurrency', 'maxConcurrency'], defaultSettings.maxConcurrency),
+    contextWindow: readOptionNumberString(instance.options, ['context_window', 'contextWindow', 'num_ctx'], defaultSettings.contextWindow),
+    temperature: readOptionNumberString(instance.options, ['temperature', 'temp'], defaultSettings.temperature),
+    autoRestart: readOptionBoolean(instance.options, ['auto_restart', 'autoRestart', 'restart_on_failure'], defaultSettings.autoRestart),
+  }
+}
+
 function normalizeStatus(status: InstanceStatus): 'running' | 'stopped' | 'transitioning' {
   if (status === 'running') {
     return 'running'
@@ -78,22 +140,18 @@ function normalizeStatus(status: InstanceStatus): 'running' | 'stopped' | 'trans
   return 'stopped'
 }
 
-function statusClass(status: InstanceStatus): string {
+function statusDotClass(status: InstanceStatus): string {
   const kind = normalizeStatus(status)
 
   if (kind === 'running') {
-    return 'bg-emerald-100 text-emerald-800'
-  }
-
-  if (kind === 'stopped') {
-    return 'bg-slate-100 text-slate-700'
+    return 'bg-emerald-500 animate-pulse [animation-duration:2.4s]'
   }
 
   if (kind === 'transitioning') {
-    return 'bg-amber-100 text-amber-800'
+    return 'bg-amber-500'
   }
 
-  return 'bg-slate-100 text-slate-700'
+  return 'bg-slate-400'
 }
 
 export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
@@ -123,44 +181,19 @@ export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
       setSaveMessage('')
 
       try {
-        const instances = await listInstances(accessToken)
-        const matched = instances.find((item) => item.name === instanceName) ?? null
+        const fetched = await getInstance(accessToken, instanceName)
 
         if (!isMounted) {
           return
         }
 
-        if (!matched) {
-          setErrorMessage(`instance "${instanceName}" was not found`)
-          setInstance(null)
-          return
-        }
-
-        setInstance(matched)
-
-        let restored = defaultSettings
-        try {
-          const stored = window.localStorage.getItem(storageKey(matched.name))
-          if (stored) {
-            const parsed = JSON.parse(stored) as Partial<InstanceSettings>
-            restored = {
-              ...defaultSettings,
-              ...parsed,
-            }
-          }
-        } catch {
-          restored = defaultSettings
-        }
-
-        setSettings({
-          ...restored,
-          backend: restored.backend || readOptionString(matched.options, ['backend', 'backend_type']),
-          model: restored.model || readOptionString(matched.options, ['model', 'model_name']),
-        })
+        setInstance(fetched)
+        setSettings(settingsFromInstance(fetched))
       } catch (error) {
         if (isMounted) {
           setErrorMessage(toDisplayError(error))
           setInstance(null)
+          setSettings(defaultSettings)
         }
       } finally {
         if (isMounted) {
@@ -203,15 +236,18 @@ export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
               Back to instances
             </Link>
           </Button>
-          <h1 className="text-lg font-semibold">{instanceName || 'Instance details'}</h1>
+          <h1 className="flex items-center gap-2 text-lg font-semibold">
+            <span>{instanceName || 'Instance details'}</span>
+            {instance ? (
+              <span
+                className={`inline-block size-2.5 rounded-full ${statusDotClass(instance.status ?? 'stopped')}`}
+                aria-label={`Instance status: ${instance.status || 'stopped'}`}
+                title={instance.status || 'stopped'}
+              />
+            ) : null}
+          </h1>
           <p className="text-sm text-muted-foreground">Tune model and runtime settings for this instance.</p>
         </div>
-
-        {instance ? (
-          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusClass(instance.status)}`}>
-            {instance.status}
-          </span>
-        ) : null}
       </div>
 
       {errorMessage ? (
@@ -226,7 +262,12 @@ export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
         </div>
       ) : null}
 
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading instance details...</p> : null}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner size="sm" aria-label="Loading instance details" />
+          <span>Loading instance details...</span>
+        </div>
+      ) : null}
 
       {!isLoading && instance ? (
         <Card>

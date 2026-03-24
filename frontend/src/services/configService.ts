@@ -1,9 +1,7 @@
 import { apiRequest } from '@/services/api'
 import { type AppConfig } from '@/types/config'
 
-export interface VersionInfo {
-  version: string
-}
+export type VersionInfo = string
 
 function authHeaders(accessToken: string): HeadersInit {
   return {

@@ -26,6 +26,7 @@ type CachedModelView = {
   label: string
   repo: string
   tag?: string
+  sizeBytes: number | null
 }
 
 function formatBytes(value: number): string {
@@ -77,6 +78,48 @@ function asPrettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2)
 }
 
+function asNonNegativeFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value >= 0 ? value : null
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return null
+    }
+
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
+  }
+
+  return null
+}
+
+function getCachedModelSizeBytes(model: unknown): number | null {
+  if (!model || typeof model !== 'object') {
+    return null
+  }
+
+  const sizeCandidates = [
+    Reflect.get(model, 'size_bytes'),
+    Reflect.get(model, 'sizeBytes'),
+    Reflect.get(model, 'total_bytes'),
+    Reflect.get(model, 'totalBytes'),
+    Reflect.get(model, 'bytes'),
+    Reflect.get(model, 'size'),
+  ]
+
+  for (const candidate of sizeCandidates) {
+    const parsed = asNonNegativeFiniteNumber(candidate)
+    if (parsed !== null) {
+      return parsed
+    }
+  }
+
+  return null
+}
+
 function toCachedModelView(model: unknown, index: number): CachedModelView {
   if (typeof model === 'string') {
     const [repo, tag] = model.includes(':') ? model.split(':', 2) : [model, '']
@@ -85,6 +128,7 @@ function toCachedModelView(model: unknown, index: number): CachedModelView {
       label: model,
       repo,
       tag: tag || undefined,
+      sizeBytes: null,
     }
   }
 
@@ -113,6 +157,7 @@ function toCachedModelView(model: unknown, index: number): CachedModelView {
       label,
       repo,
       tag,
+      sizeBytes: getCachedModelSizeBytes(model),
     }
   }
 
@@ -121,6 +166,7 @@ function toCachedModelView(model: unknown, index: number): CachedModelView {
     key: `cached:${label}:${index}`,
     label,
     repo: label,
+    sizeBytes: null,
   }
 }
 
@@ -226,6 +272,14 @@ export function ModelsPage({ accessToken }: ModelsPageProps) {
     return cachedModels.map((model, index) => toCachedModelView(model as unknown, index))
   }, [cachedModels])
 
+  const totalCachedBytes = useMemo(() => {
+    return cachedModelViews.reduce((sum, model) => sum + (model.sizeBytes ?? 0), 0)
+  }, [cachedModelViews])
+
+  const hasUnknownCachedSize = useMemo(() => {
+    return cachedModelViews.some((model) => model.sizeBytes === null)
+  }, [cachedModelViews])
+
   return (
     <section className="space-y-4 pb-4">
       <div className="rounded-lg border border-border bg-card p-4">
@@ -302,6 +356,16 @@ export function ModelsPage({ accessToken }: ModelsPageProps) {
           </TabsList>
 
           <TabsContent value="cached">
+            <div className="mb-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+              <p className="text-sm font-medium">
+                Total cached size: {formatBytes(totalCachedBytes)}
+                {hasUnknownCachedSize ? ' (partial)' : ''}
+              </p>
+              {hasUnknownCachedSize ? (
+                <p className="text-xs text-muted-foreground">Some models do not report a size.</p>
+              ) : null}
+            </div>
+
             <div className="space-y-2 sm:hidden">
               {cachedModelViews.length === 0 ? (
                 <div className="rounded-lg border border-border bg-card px-3 py-6 text-sm text-muted-foreground">
@@ -313,7 +377,12 @@ export function ModelsPage({ accessToken }: ModelsPageProps) {
                     key={`mobile:${model.key}`}
                     className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2"
                   >
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{model.label}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{model.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Size: {model.sizeBytes !== null ? formatBytes(model.sizeBytes) : 'Unknown'}
+                      </p>
+                    </div>
 
                     <div className="flex items-center">
                       <Button
@@ -339,7 +408,12 @@ export function ModelsPage({ accessToken }: ModelsPageProps) {
                 <ul className="divide-y divide-border/60">
                   {cachedModelViews.map((model) => (
                     <li key={model.key} className="flex flex-col gap-2 px-2 py-2 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="min-w-0 flex-1 truncate text-sm">{model.label}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm">{model.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Size: {model.sizeBytes !== null ? formatBytes(model.sizeBytes) : 'Unknown'}
+                        </p>
+                      </div>
 
                       <div className="flex justify-end">
                         <Button

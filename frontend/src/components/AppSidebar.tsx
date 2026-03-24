@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   IconChevronUp,
-  IconCpu,
   IconDatabaseCog,
   IconLogout,
   IconPackage,
@@ -45,11 +44,6 @@ const navItems: NavItem[] = [
     label: 'Models',
     to: '/models',
     icon: IconPackage,
-  },
-  {
-    label: 'Backends',
-    to: '/backends',
-    icon: IconCpu,
   },
   {
     label: 'API Keys',

@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiServiceError } from '@/services/api'
-import { listInstances, type InstanceSummary } from '@/services/instanceService'
+import { listInstances } from '@/services/instanceService'
+import { type CreateInstanceOptions, type Instance, type InstanceStatus } from '@/types/instance'
 
 type InstanceDetailPageProps = {
   accessToken: string
@@ -46,25 +47,38 @@ function storageKey(name: string): string {
   return `instance-settings:${name}`
 }
 
-function normalizeStatus(status: string): 'running' | 'stopped' | 'transitioning' | 'unknown' {
-  const value = status.trim().toLowerCase()
+function readOptionString(options: CreateInstanceOptions | undefined, keys: string[]): string {
+  if (!options) {
+    return ''
+  }
 
-  if (['running', 'started', 'online', 'up'].includes(value)) {
+  for (const key of keys) {
+    const value = options[key]
+    if (typeof value === 'string' && value.trim() !== '') {
+      return value
+    }
+  }
+
+  return ''
+}
+
+function normalizeStatus(status: InstanceStatus): 'running' | 'stopped' | 'transitioning' {
+  if (status === 'running') {
     return 'running'
   }
 
-  if (['stopped', 'offline', 'down', 'exited'].includes(value)) {
+  if (status === 'stopped' || status === 'failed') {
     return 'stopped'
   }
 
-  if (['starting', 'stopping', 'restarting', 'pending'].includes(value)) {
+  if (status === 'restarting' || status === 'shutting_down') {
     return 'transitioning'
   }
 
-  return 'unknown'
+  return 'stopped'
 }
 
-function statusClass(status: string): string {
+function statusClass(status: InstanceStatus): string {
   const kind = normalizeStatus(status)
 
   if (kind === 'running') {
@@ -79,14 +93,14 @@ function statusClass(status: string): string {
     return 'bg-amber-100 text-amber-800'
   }
 
-  return 'bg-sky-100 text-sky-800'
+  return 'bg-slate-100 text-slate-700'
 }
 
 export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
   const { name: routeName } = useParams<{ name: string }>()
   const instanceName = useMemo(() => (routeName ? decodeURIComponent(routeName) : ''), [routeName])
 
-  const [instance, setInstance] = useState<InstanceSummary | null>(null)
+  const [instance, setInstance] = useState<Instance | null>(null)
   const [settings, setSettings] = useState<InstanceSettings>(defaultSettings)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -140,8 +154,8 @@ export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
 
         setSettings({
           ...restored,
-          backend: restored.backend || matched.backend,
-          model: restored.model || matched.model,
+          backend: restored.backend || readOptionString(matched.options, ['backend', 'backend_type']),
+          model: restored.model || readOptionString(matched.options, ['model', 'model_name']),
         })
       } catch (error) {
         if (isMounted) {
@@ -195,7 +209,7 @@ export function InstanceDetailPage({ accessToken }: InstanceDetailPageProps) {
 
         {instance ? (
           <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusClass(instance.status)}`}>
-            {instance.status || 'unknown'}
+            {instance.status}
           </span>
         ) : null}
       </div>

@@ -1,21 +1,24 @@
 import { apiRequest } from '@/services/api'
+import { type Instance } from '@/types/instance'
 
-export type InstanceSummary = {
-  name: string
-  status: string
-  backend: string
-  model: string
-  raw: Record<string, unknown>
-}
+type ListInstancesResponse =
+  | Instance[]
+  | {
+      instances: Instance[]
+    }
+
+type InstanceLogsResponse =
+  | string
+  | string[]
+  | {
+      logs?: string | string[]
+      lines?: string[]
+    }
 
 function authHeaders(accessToken: string): HeadersInit {
   return {
     Authorization: `Bearer ${accessToken}`,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function tailLines(text: string, maxLines: number): string {
@@ -28,67 +31,36 @@ function tailLines(text: string, maxLines: number): string {
   return lines.slice(-maxLines).join('\n')
 }
 
-function readString(record: Record<string, unknown>, keys: string[]): string {
-  for (const key of keys) {
-    const value = record[key]
-    if (typeof value === 'string' && value.trim() !== '') {
-      return value
-    }
+function toLogText(payload: InstanceLogsResponse, maxLines: number): string {
+  if (typeof payload === 'string') {
+    return tailLines(payload, maxLines)
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.slice(-maxLines).join('\n')
+  }
+
+  if (typeof payload.logs === 'string') {
+    return tailLines(payload.logs, maxLines)
+  }
+
+  if (Array.isArray(payload.logs)) {
+    return payload.logs.slice(-maxLines).join('\n')
+  }
+
+  if (Array.isArray(payload.lines)) {
+    return payload.lines.slice(-maxLines).join('\n')
   }
 
   return ''
 }
 
-function normalizeInstance(item: unknown, index: number): InstanceSummary {
-  if (!isRecord(item)) {
-    const fallbackName = `instance-${index + 1}`
-    return {
-      name: fallbackName,
-      status: 'unknown',
-      backend: 'n/a',
-      model: 'n/a',
-      raw: { value: item },
-    }
-  }
-
-  const name = readString(item, ['name', 'instance_name', 'id']) || `instance-${index + 1}`
-  const status = readString(item, ['status', 'state']) || 'unknown'
-  const backend = readString(item, ['backend', 'backend_type']) || 'n/a'
-  const model = readString(item, ['model', 'model_name']) || 'n/a'
-
-  return {
-    name,
-    status,
-    backend,
-    model,
-    raw: item,
-  }
-}
-
-function normalizeListResponse(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) {
-    return payload
-  }
-
-  if (isRecord(payload)) {
-    const candidates = ['instances', 'data', 'items']
-    for (const key of candidates) {
-      const value = payload[key]
-      if (Array.isArray(value)) {
-        return value
-      }
-    }
-  }
-
-  return []
-}
-
-export async function listInstances(accessToken: string): Promise<InstanceSummary[]> {
-  const payload = await apiRequest<unknown>('/v1/instances', {
+export async function listInstances(accessToken: string): Promise<Instance[]> {
+  const payload = await apiRequest<ListInstancesResponse>('/v1/instances', {
     headers: authHeaders(accessToken),
   })
 
-  return normalizeListResponse(payload).map((item, index) => normalizeInstance(item, index))
+  return Array.isArray(payload) ? payload : payload.instances
 }
 
 async function postInstanceAction(accessToken: string, name: string, action: 'start' | 'stop' | 'restart'): Promise<void> {
@@ -111,47 +83,12 @@ export async function restartInstance(accessToken: string, name: string): Promis
 }
 
 export async function getInstanceLogs(accessToken: string, name: string, lines = 200): Promise<string> {
-  const payload = await apiRequest<unknown>(
+  const payload = await apiRequest<InstanceLogsResponse>(
     `/v1/instances/${encodeURIComponent(name)}/logs?lines=${encodeURIComponent(String(lines))}`,
     {
       headers: authHeaders(accessToken),
     }
   )
 
-  if (typeof payload === 'string') {
-    return tailLines(payload, lines)
-  }
-
-  if (Array.isArray(payload)) {
-    return payload
-      .slice(-lines)
-      .map((line) => String(line))
-      .join('\n')
-  }
-
-  if (isRecord(payload)) {
-    const logsValue = payload.logs
-    if (typeof logsValue === 'string') {
-      return tailLines(logsValue, lines)
-    }
-
-    if (Array.isArray(logsValue)) {
-      return logsValue
-        .slice(-lines)
-        .map((line) => String(line))
-        .join('\n')
-    }
-
-    const linesValue = payload.lines
-    if (Array.isArray(linesValue)) {
-      return linesValue
-        .slice(-lines)
-        .map((line) => String(line))
-        .join('\n')
-    }
-
-    return JSON.stringify(payload, null, 2)
-  }
-
-  return String(payload)
+  return toLogText(payload, lines)
 }

@@ -6,13 +6,13 @@ import {
   restartInstance,
   startInstance,
   stopInstance,
-  type InstanceSummary,
 } from '@/services/instanceService'
+import { type Instance, type InstanceStatus } from '@/types/instance'
 
 export type InstanceAction = 'start' | 'stop' | 'restart' | 'logs'
-export type InstanceStatusKind = 'running' | 'stopped' | 'transitioning' | 'unknown'
+export type InstanceStatusKind = 'running' | 'stopped' | 'transitioning'
 
-export type InstanceRow = InstanceSummary & {
+export type InstanceRow = Instance & {
   statusKind: InstanceStatusKind
   availableActions: InstanceAction[]
 }
@@ -42,22 +42,20 @@ function toDisplayError(error: unknown, fallbackMessage: string): string {
   return fallbackMessage
 }
 
-function normalizeStatus(status: string): InstanceStatusKind {
-  const value = status.trim().toLowerCase()
-
-  if (['running', 'started', 'online', 'up'].includes(value)) {
+function normalizeStatus(status: InstanceStatus): InstanceStatusKind {
+  if (status === 'running') {
     return 'running'
   }
 
-  if (['stopped', 'offline', 'down', 'exited'].includes(value)) {
+  if (status === 'stopped' || status === 'failed') {
     return 'stopped'
   }
 
-  if (['starting', 'stopping', 'restarting', 'pending'].includes(value)) {
+  if (status === 'restarting' || status === 'shutting_down') {
     return 'transitioning'
   }
 
-  return 'unknown'
+  return 'stopped'
 }
 
 function actionsForStatus(statusKind: InstanceStatusKind): InstanceAction[] {
@@ -77,7 +75,7 @@ function actionsForStatus(statusKind: InstanceStatusKind): InstanceAction[] {
 }
 
 export function useInstances(accessToken: string): UseInstancesState {
-  const [instances, setInstances] = useState<InstanceSummary[]>([])
+  const [instances, setInstances] = useState<Instance[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [activeActionKey, setActiveActionKey] = useState('')

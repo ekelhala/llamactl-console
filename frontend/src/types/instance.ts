@@ -1,0 +1,31 @@
+import type { CreateInstanceOptions } from './instanceOptions'
+
+export { type CreateInstanceOptions } from './instanceOptions'
+
+export const BackendType = {
+  LLAMA_CPP: 'llama_cpp',
+  MLX_LM: 'mlx_lm',
+  VLLM: 'vllm',
+  // MLX_VLM: 'mlx_vlm',  // Future expansion
+} as const
+
+export type BackendTypeValue = typeof BackendType[keyof typeof BackendType]
+
+export type InstanceStatus = 'running' | 'stopped' | 'failed' | 'restarting' | 'shutting_down'
+
+export type HealthState = 'stopped' | 'starting' | 'ready' | 'failed' | 'restarting' | 'shutting_down'
+
+export interface HealthStatus {
+  state: HealthState
+  instanceStatus: InstanceStatus
+  lastChecked: Date
+  error?: string
+  source: 'backend' | 'http'
+}
+
+export interface Instance {
+  id: number
+  name: string
+  status: InstanceStatus
+  options?: CreateInstanceOptions
+}

@@ -30,18 +30,14 @@ const actionMeta: Record<InstanceAction, { label: string; icon: ComponentType<{ 
 
 function statusMeta(row: InstanceRow): StatusMeta {
   if (row.statusKind === 'running') {
-    return { label: row.status || 'running', dotClassName: 'bg-emerald-500' }
+    return { label: row.status, dotClassName: 'bg-emerald-500' }
   }
 
   if (row.statusKind === 'stopped') {
-    return { label: row.status || 'stopped', dotClassName: 'bg-slate-400' }
+    return { label: row.status, dotClassName: 'bg-slate-400' }
   }
 
-  if (row.statusKind === 'transitioning') {
-    return { label: row.status || 'transitioning', dotClassName: 'bg-amber-500 animate-pulse' }
-  }
-
-  return { label: row.status || 'unknown', dotClassName: 'bg-sky-500' }
+  return { label: row.status, dotClassName: 'bg-amber-500 animate-pulse' }
 }
 
 export function InstancesPage({ accessToken }: InstancesPageProps) {

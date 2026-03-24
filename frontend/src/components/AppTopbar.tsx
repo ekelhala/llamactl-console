@@ -6,7 +6,10 @@ import { useTheme } from '@/hooks/useTheme'
 
 const routeTitles: Record<string, string> = {
   '/instances': 'Instances',
+  '/models': 'Models',
+  '/backends': 'Backend Tools',
   '/api-keys': 'API Keys',
+  '/system': 'System',
 }
 
 export function AppTopbar() {

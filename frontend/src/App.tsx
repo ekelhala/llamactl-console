@@ -5,9 +5,12 @@ import { LoginForm } from '@/components/LoginForm'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useAuth } from '@/hooks/useAuth'
 import { ApiKeysPage } from '@/pages/ApiKeysPage'
+import { BackendsPage } from '@/pages/BackendsPage'
 import { InstanceDetailPage } from '@/pages/InstanceDetailPage'
 import { InstanceLogsPage } from '@/pages/InstanceLogsPage'
 import { InstancesPage } from '@/pages/InstancesPage'
+import { ModelsPage } from '@/pages/ModelsPage'
+import { SystemPage } from '@/pages/SystemPage'
 
 function App() {
   const { status, isSubmitting, errorMessage, user, accessToken, signIn, signOut } = useAuth()
@@ -36,7 +39,10 @@ function App() {
             <Route path="/instances" element={<InstancesPage accessToken={accessToken} />} />
             <Route path="/instances/:name" element={<InstanceDetailPage accessToken={accessToken} />} />
             <Route path="/instances/:name/logs" element={<InstanceLogsPage accessToken={accessToken} />} />
-            <Route path="/api-keys" element={<ApiKeysPage />} />
+            <Route path="/api-keys" element={<ApiKeysPage accessToken={accessToken} />} />
+            <Route path="/models" element={<ModelsPage accessToken={accessToken} />} />
+            <Route path="/backends" element={<BackendsPage accessToken={accessToken} />} />
+            <Route path="/system" element={<SystemPage accessToken={accessToken} />} />
             <Route path="*" element={<Navigate to="/instances" replace />} />
           </Routes>
         </div>

@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconChevronUp, IconDatabaseCog, IconLogout, IconServer, IconUserCircle } from '@tabler/icons-react'
+import {
+  IconChevronUp,
+  IconCpu,
+  IconDatabaseCog,
+  IconLogout,
+  IconPackage,
+  IconServer,
+  IconSettings,
+  IconUserCircle,
+} from '@tabler/icons-react'
 import { NavLink } from 'react-router-dom'
 import {
   Sidebar,
@@ -33,9 +42,24 @@ const navItems: NavItem[] = [
     icon: IconServer,
   },
   {
+    label: 'Models',
+    to: '/models',
+    icon: IconPackage,
+  },
+  {
+    label: 'Backends',
+    to: '/backends',
+    icon: IconCpu,
+  },
+  {
     label: 'API Keys',
     to: '/api-keys',
     icon: IconDatabaseCog,
+  },
+  {
+    label: 'System',
+    to: '/system',
+    icon: IconSettings,
   },
 ]
 

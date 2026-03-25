@@ -19,8 +19,8 @@ func TestLoadFromEnvSuccess(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if cfg.Port != "8080" {
-		t.Fatalf("expected default port 8080, got %s", cfg.Port)
+	if cfg.Port != "8000" {
+		t.Fatalf("expected default port 8000, got %s", cfg.Port)
 	}
 	if cfg.JWTAccessTTL != 20*time.Minute {
 		t.Fatalf("expected access ttl 20m, got %s", cfg.JWTAccessTTL)

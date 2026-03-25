@@ -11,8 +11,11 @@ import (
 )
 
 func New(cfg config.Config, logger *slog.Logger) *http.Server {
-	userStore := auth.NewInMemoryUserStore()
-	refreshStore := auth.NewInMemoryRefreshStore()
+	userStore, refreshStore, err := newAuthStores(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize auth stores: %v", err))
+	}
+
 	authService, err := auth.NewService(cfg.JWTSigningKey, cfg.JWTAccessTTL, cfg.JWTRefreshTTL, userStore, refreshStore)
 	if err != nil {
 		panic(fmt.Sprintf("failed to initialize auth service: %v", err))
@@ -44,5 +47,20 @@ func New(cfg config.Config, logger *slog.Logger) *http.Server {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 		IdleTimeout:  cfg.IdleTimeout,
+	}
+}
+
+func newAuthStores(cfg config.Config) (auth.UserStore, auth.RefreshStore, error) {
+	switch cfg.StorageBackend {
+	case "sqlite":
+		users, refresh, err := auth.NewSQLiteStores(cfg.StorageSQLitePath)
+		if err != nil {
+			return nil, nil, err
+		}
+		return users, refresh, nil
+	case "inmemory", "":
+		return auth.NewInMemoryUserStore(), auth.NewInMemoryRefreshStore(), nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported storage backend: %s", cfg.StorageBackend)
 	}
 }

@@ -26,6 +26,9 @@ func TestLoadFromEnvSuccess(t *testing.T) {
 	if cfg.JWTAccessTTL != 20*time.Minute {
 		t.Fatalf("expected access ttl 20m, got %s", cfg.JWTAccessTTL)
 	}
+	if cfg.StorageBackend != "inmemory" {
+		t.Fatalf("expected default storage backend inmemory, got %q", cfg.StorageBackend)
+	}
 }
 
 func TestLoadFromEnvMissingRequired(t *testing.T) {
@@ -86,6 +89,8 @@ func TestLoadFromEnvAndYAMLUsesYAMLWhenEnvUnset(t *testing.T) {
 	unsetForTest(t, "HTTP_SHUTDOWN_TIMEOUT")
 	unsetForTest(t, "APP_JWT_ACCESS_TTL")
 	unsetForTest(t, "APP_JWT_REFRESH_TTL")
+	unsetForTest(t, "APP_STORAGE_BACKEND")
+	unsetForTest(t, "APP_STORAGE_SQLITE_PATH")
 
 	t.Setenv("LLAMACTL_BASE_URL", "http://env-base")
 	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
@@ -108,6 +113,10 @@ func TestLoadFromEnvAndYAMLUsesYAMLWhenEnvUnset(t *testing.T) {
 		"  adminUsername: root",
 		"logging:",
 		"  level: debug",
+		"storage:",
+		"  backend: sqlite",
+		"  sqlite:",
+		"    path: /tmp/llamactl-console.db",
 	}, "\n")
 	if err := os.WriteFile(configPath, []byte(yaml), 0o600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
@@ -133,6 +142,12 @@ func TestLoadFromEnvAndYAMLUsesYAMLWhenEnvUnset(t *testing.T) {
 	if cfg.BootstrapAdminUsername != "root" {
 		t.Fatalf("expected bootstrap username from YAML, got %q", cfg.BootstrapAdminUsername)
 	}
+	if cfg.StorageBackend != "sqlite" {
+		t.Fatalf("expected storage backend from YAML, got %q", cfg.StorageBackend)
+	}
+	if cfg.StorageSQLitePath != "/tmp/llamactl-console.db" {
+		t.Fatalf("expected sqlite path from YAML, got %q", cfg.StorageSQLitePath)
+	}
 }
 
 func TestLoadFromEnvAndYAMLEnvOverridesYAML(t *testing.T) {
@@ -141,6 +156,7 @@ func TestLoadFromEnvAndYAMLEnvOverridesYAML(t *testing.T) {
 	t.Setenv("LLAMACTL_BASE_URL", "http://env-base")
 	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
 	t.Setenv("APP_JWT_SIGNING_KEY", "01234567890123456789012345678901")
+	t.Setenv("APP_STORAGE_BACKEND", "inmemory")
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
@@ -151,6 +167,10 @@ func TestLoadFromEnvAndYAMLEnvOverridesYAML(t *testing.T) {
 		"  baseURL: http://yaml-base",
 		"logging:",
 		"  level: debug",
+		"storage:",
+		"  backend: sqlite",
+		"  sqlite:",
+		"    path: /tmp/yaml.db",
 	}, "\n")
 	if err := os.WriteFile(configPath, []byte(yaml), 0o600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
@@ -169,6 +189,37 @@ func TestLoadFromEnvAndYAMLEnvOverridesYAML(t *testing.T) {
 	}
 	if cfg.LogLevel != parseLogLevel("error") {
 		t.Fatalf("expected env log level to override YAML")
+	}
+	if cfg.StorageBackend != "inmemory" {
+		t.Fatalf("expected env storage backend to override YAML, got %q", cfg.StorageBackend)
+	}
+}
+
+func TestLoadFromEnvRejectsInvalidStorageBackend(t *testing.T) {
+	t.Setenv("LLAMACTL_BASE_URL", "http://localhost:9090")
+	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
+	t.Setenv("APP_JWT_SIGNING_KEY", "01234567890123456789012345678901")
+	t.Setenv("APP_STORAGE_BACKEND", "postgres")
+
+	_, err := LoadFromEnv()
+	if err == nil {
+		t.Fatal("expected an error for invalid storage backend")
+	}
+}
+
+func TestLoadFromEnvUsesDefaultSQLitePath(t *testing.T) {
+	t.Setenv("LLAMACTL_BASE_URL", "http://localhost:9090")
+	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
+	t.Setenv("APP_JWT_SIGNING_KEY", "01234567890123456789012345678901")
+	t.Setenv("APP_STORAGE_BACKEND", "sqlite")
+	t.Setenv("APP_STORAGE_SQLITE_PATH", "")
+
+	cfg, err := LoadFromEnv()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if cfg.StorageSQLitePath != "data/llamactl-console.db" {
+		t.Fatalf("expected default sqlite path, got %q", cfg.StorageSQLitePath)
 	}
 }
 

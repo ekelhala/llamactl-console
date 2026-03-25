@@ -18,6 +18,8 @@ type Config struct {
 	Port                     string
 	LlamactlBaseURL          string
 	LlamactlManagementAPIKey string
+	StorageBackend           string
+	StorageSQLitePath        string
 	JWTSigningKey            string
 	JWTAccessTTL             time.Duration
 	JWTRefreshTTL            time.Duration
@@ -56,6 +58,12 @@ type fileConfig struct {
 	Logging struct {
 		Level string `yaml:"level"`
 	} `yaml:"logging"`
+	Storage struct {
+		Backend string `yaml:"backend"`
+		SQLite  struct {
+			Path string `yaml:"path"`
+		} `yaml:"sqlite"`
+	} `yaml:"storage"`
 }
 
 func Load() (Config, error) {
@@ -78,6 +86,8 @@ func LoadFromEnvAndYAML(path string) (Config, error) {
 		Port:                     getEnvOrDefault("PORT", "8000"),
 		LlamactlBaseURL:          strings.TrimSpace(os.Getenv("LLAMACTL_BASE_URL")),
 		LlamactlManagementAPIKey: strings.TrimSpace(os.Getenv("LLAMACTL_MANAGEMENT_API_KEY")),
+		StorageBackend:           strings.ToLower(getEnvOrDefault("APP_STORAGE_BACKEND", "inmemory")),
+		StorageSQLitePath:        getEnvOrDefault("APP_STORAGE_SQLITE_PATH", "data/llamactl-console.db"),
 		JWTSigningKey:            strings.TrimSpace(os.Getenv("APP_JWT_SIGNING_KEY")),
 		BootstrapAdminUsername:   getEnvOrDefault("BOOTSTRAP_ADMIN_USERNAME", "admin"),
 		BootstrapAdminPassword:   strings.TrimSpace(os.Getenv("BOOTSTRAP_ADMIN_PASSWORD")),
@@ -127,6 +137,12 @@ func validate(cfg Config) error {
 	}
 	if cfg.JWTRefreshTTL <= 0 {
 		return errors.New("APP_JWT_REFRESH_TTL must be greater than zero")
+	}
+	if cfg.StorageBackend != "inmemory" && cfg.StorageBackend != "sqlite" {
+		return errors.New("APP_STORAGE_BACKEND must be one of: inmemory, sqlite")
+	}
+	if cfg.StorageBackend == "sqlite" && strings.TrimSpace(cfg.StorageSQLitePath) == "" {
+		return errors.New("APP_STORAGE_SQLITE_PATH is required when APP_STORAGE_BACKEND=sqlite")
 	}
 
 	if len(missing) > 0 {
@@ -237,6 +253,12 @@ func applyFileConfig(cfg *Config, yamlCfg fileConfig) {
 	}
 	if os.Getenv("LOG_LEVEL") == "" && strings.TrimSpace(yamlCfg.Logging.Level) != "" {
 		cfg.LogLevel = parseLogLevel(yamlCfg.Logging.Level)
+	}
+	if os.Getenv("APP_STORAGE_BACKEND") == "" && strings.TrimSpace(yamlCfg.Storage.Backend) != "" {
+		cfg.StorageBackend = strings.ToLower(strings.TrimSpace(yamlCfg.Storage.Backend))
+	}
+	if os.Getenv("APP_STORAGE_SQLITE_PATH") == "" && strings.TrimSpace(yamlCfg.Storage.SQLite.Path) != "" {
+		cfg.StorageSQLitePath = strings.TrimSpace(yamlCfg.Storage.SQLite.Path)
 	}
 }
 

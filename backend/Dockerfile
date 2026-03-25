@@ -1,18 +1,30 @@
-FROM golang:1.22-alpine AS builder
-WORKDIR /src
+FROM oven/bun:1.2.11-alpine AS frontend-builder
+WORKDIR /src/frontend
 
-COPY go.mod ./
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install --frozen-lockfile
+
+COPY frontend/ ./
+RUN bun run build
+
+FROM golang:1.22-alpine AS backend-builder
+WORKDIR /src/backend
+
+COPY backend/go.mod ./
 RUN go mod download
 
-COPY . .
+COPY backend/ ./
+COPY --from=frontend-builder /src/frontend/dist ./internal/httpserver/web/dist
+
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/server ./cmd/server
 
 FROM alpine:3.20
-RUN adduser -D -g '' appuser
+RUN apk add --no-cache ca-certificates \
+	&& adduser -D -g '' appuser
 USER appuser
 WORKDIR /app
 
-COPY --from=builder /out/server ./server
+COPY --from=backend-builder /out/server ./server
 
-EXPOSE 8080
+EXPOSE 8000
 ENTRYPOINT ["/app/server"]

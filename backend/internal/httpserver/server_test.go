@@ -22,9 +22,6 @@ func TestNewAuthStoresInMemory(t *testing.T) {
 	if _, ok := refreshStore.(*auth.InMemoryRefreshStore); !ok {
 		t.Fatalf("expected *auth.InMemoryRefreshStore, got %T", refreshStore)
 	}
-	if userStore == nil || refreshStore == nil {
-		t.Fatal("expected non-nil stores")
-	}
 }
 
 func TestNewAuthStoresSQLiteCreatesDatabaseFile(t *testing.T) {

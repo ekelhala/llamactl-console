@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"modernc.org/sqlite"
-	_ "modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 

@@ -218,6 +218,9 @@ func TestLoadFromEnvUsesDefaultSQLitePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
+	if cfg.StorageBackend != "sqlite" {
+		t.Fatalf("expected sqlite backend, got %q", cfg.StorageBackend)
+	}
 	if cfg.StorageSQLitePath != "data/llamactl-console.db" {
 		t.Fatalf("expected default sqlite path, got %q", cfg.StorageSQLitePath)
 	}

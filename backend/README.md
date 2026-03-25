@@ -5,16 +5,23 @@ This directory contains the Go proxy backend for `llamactl-console`.
 ## Quick Start
 
 1. Copy `.env.example` to `.env` and set required values.
-2. (Optional) Copy `config.example.yaml` and set `APP_CONFIG_FILE` to its path.
+2. Copy the example config into `config.yaml`.
 3. Start the service.
 
 ```bash
+cp config.example.yaml config.yaml
 make run
 ```
 
+You can override the config file location with `--config`:
+
+```bash
+go run ./cmd/server --config ./config.local.yaml
+```
+
 Configuration precedence:
-- environment variables and `.env` values (highest priority)
-- YAML file values from `APP_CONFIG_FILE`
+- Config file path: `--config` command-line option (default: `config.yaml`), then `APP_CONFIG_FILE` when `--config` is not provided
+- For values inside the selected config file, environment variables and `.env` values override YAML values (highest priority)
 - built-in defaults
 
 Sensitive values are intentionally not accepted from YAML and must come from env/.env:
@@ -43,6 +50,7 @@ Run the built image locally with your backend config:
 docker run --rm \
 	--name llamactl-console \
 	-p 8000:8000 \
+	-v "$(pwd)/backend/config.yaml:/app/config.yaml:ro" \
 	--env-file backend/.env \
 	llamactl-console:latest
 ```

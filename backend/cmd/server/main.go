@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,10 +18,23 @@ import (
 	"github.com/ekelhala/llamactl-console/backend/internal/httpserver"
 )
 
-func main() {
-	configPath := parseConfigPath(os.Args[1:])
+const (
+	defaultConfigPath = "config.yaml"
+	configPathEnvVar  = "APP_CONFIG_FILE"
+)
 
-	cfg, err := config.LoadFromEnvAndYAML(configPath)
+type serverOptions struct {
+	configPath string
+}
+
+func main() {
+	options, err := parseServerOptions(os.Args[1:])
+	if err != nil {
+		slog.Error("failed to parse command-line arguments", "error", err)
+		os.Exit(1)
+	}
+
+	cfg, err := config.LoadFromEnvAndYAML(options.configPath)
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)
@@ -60,10 +75,13 @@ func main() {
 	logger.Info("server stopped", "uptime", time.Since(cfg.StartedAt).String())
 }
 
-func parseConfigPath(args []string) string {
-	flags := flag.NewFlagSet("server", flag.ExitOnError)
-	configPath := flags.String("config", "config.yaml", "Path to configuration file")
-	flags.Parse(args)
+func parseServerOptions(args []string) (serverOptions, error) {
+	flags := flag.NewFlagSet("server", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	configPath := flags.String("config", defaultConfigPath, "Path to configuration file")
+	if err := flags.Parse(args); err != nil {
+		return serverOptions{}, fmt.Errorf("parse flags: %w", err)
+	}
 
 	configFlagExplicitlySet := false
 	flags.Visit(func(f *flag.Flag) {
@@ -72,12 +90,12 @@ func parseConfigPath(args []string) string {
 		}
 	})
 	if configFlagExplicitlySet {
-		return *configPath
+		return serverOptions{configPath: *configPath}, nil
 	}
 
-	if envPath := strings.TrimSpace(os.Getenv("APP_CONFIG_FILE")); envPath != "" {
-		return envPath
+	if envPath := strings.TrimSpace(os.Getenv(configPathEnvVar)); envPath != "" {
+		return serverOptions{configPath: envPath}, nil
 	}
 
-	return *configPath
+	return serverOptions{configPath: *configPath}, nil
 }

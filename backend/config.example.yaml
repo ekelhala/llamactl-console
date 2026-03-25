@@ -18,3 +18,8 @@ bootstrap:
 
 logging:
   level: "info"
+
+storage:
+  backend: "inmemory"
+  sqlite:
+    path: "data/llamactl-console.db"

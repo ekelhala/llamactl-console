@@ -29,6 +29,11 @@ Sensitive values are intentionally not accepted from YAML and must come from env
 - `APP_JWT_SIGNING_KEY`
 - `BOOTSTRAP_ADMIN_PASSWORD`
 
+Storage configuration:
+- `APP_STORAGE_BACKEND` (or `storage.backend` in YAML): `inmemory` (default) or `sqlite`
+- `APP_STORAGE_SQLITE_PATH` (or `storage.sqlite.path` in YAML): SQLite database file path (default: `data/llamactl-console.db`)
+- When `sqlite` is selected, the database file is created automatically at startup if it does not exist.
+
 Health endpoints:
 - `GET /api/health`
 - `GET /api/health/live`

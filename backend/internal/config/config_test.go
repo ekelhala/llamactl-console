@@ -195,7 +195,7 @@ func TestLoadFromEnvAndYAMLEnvOverridesYAML(t *testing.T) {
 	}
 }
 
-func TestLoadFromEnvRejectsInvalidStorageBackend(t *testing.T) {
+func TestLoadFromEnvRejectsUnsupportedStorageBackend(t *testing.T) {
 	t.Setenv("LLAMACTL_BASE_URL", "http://localhost:9090")
 	t.Setenv("LLAMACTL_MANAGEMENT_API_KEY", "test-key")
 	t.Setenv("APP_JWT_SIGNING_KEY", "01234567890123456789012345678901")

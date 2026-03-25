@@ -75,7 +75,6 @@ func LoadFromEnvAndYAML(path string) (Config, error) {
 	}
 
 	cfg := Config{
-		Host:                     "",
 		Port:                     getEnvOrDefault("PORT", "8000"),
 		LlamactlBaseURL:          strings.TrimSpace(os.Getenv("LLAMACTL_BASE_URL")),
 		LlamactlManagementAPIKey: strings.TrimSpace(os.Getenv("LLAMACTL_MANAGEMENT_API_KEY")),

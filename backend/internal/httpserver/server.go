@@ -33,7 +33,8 @@ func New(cfg config.Config, logger *slog.Logger) *http.Server {
 	healthHandler := handlers.NewHealthHandler(cfg.StartedAt)
 	authHandler := auth.NewHTTPHandler(authService)
 	proxyHandler := NewUpstreamProxy(cfg, logger)
-	router := NewRouter(healthHandler, authHandler, proxyHandler)
+	frontendHandler := NewFrontendHandler(logger)
+	router := NewRouter(healthHandler, authHandler, proxyHandler, frontendHandler)
 
 	handler := requestIDMiddleware(loggerMiddleware(logger, router))
 

@@ -15,6 +15,7 @@ import (
 func TestProtectedProxyRequiresAccessToken(t *testing.T) {
 	authHandler := testAuthHandler(t)
 	health := handlers.NewHealthHandler(time.Now())
+	frontend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	proxyCalled := false
 	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -22,7 +23,7 @@ func TestProtectedProxyRequiresAccessToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	router := NewRouter(health, authHandler, proxy)
+	router := NewRouter(health, authHandler, proxy, frontend)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v2/instances", nil)
 	rec := httptest.NewRecorder()
@@ -39,6 +40,7 @@ func TestProtectedProxyRequiresAccessToken(t *testing.T) {
 func TestLoginThenCallProtectedProxy(t *testing.T) {
 	authHandler := testAuthHandler(t)
 	health := handlers.NewHealthHandler(time.Now())
+	frontend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	proxyCalled := false
 	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -46,7 +48,7 @@ func TestLoginThenCallProtectedProxy(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	})
 
-	router := NewRouter(health, authHandler, proxy)
+	router := NewRouter(health, authHandler, proxy, frontend)
 
 	loginBody := map[string]string{
 		"username": "admin",
@@ -87,6 +89,7 @@ func TestLoginThenCallProtectedProxy(t *testing.T) {
 func TestPublicHealthRouteBypassesProxyAuth(t *testing.T) {
 	authHandler := testAuthHandler(t)
 	health := handlers.NewHealthHandler(time.Now())
+	frontend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	proxyCalled := false
 	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -94,7 +97,7 @@ func TestPublicHealthRouteBypassesProxyAuth(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	router := NewRouter(health, authHandler, proxy)
+	router := NewRouter(health, authHandler, proxy, frontend)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	rec := httptest.NewRecorder()
@@ -111,6 +114,7 @@ func TestPublicHealthRouteBypassesProxyAuth(t *testing.T) {
 func TestPublicLoginRouteBypassesProxyAuth(t *testing.T) {
 	authHandler := testAuthHandler(t)
 	health := handlers.NewHealthHandler(time.Now())
+	frontend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	proxyCalled := false
 	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -118,7 +122,7 @@ func TestPublicLoginRouteBypassesProxyAuth(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	router := NewRouter(health, authHandler, proxy)
+	router := NewRouter(health, authHandler, proxy, frontend)
 
 	loginBody := map[string]string{
 		"username": "admin",
@@ -135,6 +139,30 @@ func TestPublicLoginRouteBypassesProxyAuth(t *testing.T) {
 	}
 	if proxyCalled {
 		t.Fatal("proxy should not be called for login route")
+	}
+}
+
+func TestFrontendRouteServesRoot(t *testing.T) {
+	authHandler := testAuthHandler(t)
+	health := handlers.NewHealthHandler(time.Now())
+
+	proxy := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	frontend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("index"))
+	})
+
+	router := NewRouter(health, authHandler, proxy, frontend)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected frontend status 200, got %d", rec.Code)
 	}
 }
 

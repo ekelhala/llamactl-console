@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewRouter(health *handlers.HealthHandler, authHandler *auth.HTTPHandler, proxy http.Handler) http.Handler {
+func NewRouter(health *handlers.HealthHandler, authHandler *auth.HTTPHandler, proxy http.Handler, frontend http.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/api/health", health.Health)
@@ -23,6 +23,8 @@ func NewRouter(health *handlers.HealthHandler, authHandler *auth.HTTPHandler, pr
 	// while keeping explicit auth and health endpoints managed locally.
 	r.With(authHandler.RequireAccessToken).Handle("/api", proxy)
 	r.With(authHandler.RequireAccessToken).Handle("/api/*", proxy)
+	r.Handle("/", frontend)
+	r.Handle("/*", frontend)
 
 	return r
 }

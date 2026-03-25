@@ -25,3 +25,15 @@ docker build -f backend/Dockerfile -t llamactl-console:latest .
 ```
 
 The resulting image runs one backend binary that serves the built frontend bundle from `/` and API routes from `/api/*`.
+
+Run the built image locally with your backend config:
+
+```bash
+docker run --rm \
+	--name llamactl-console \
+	-p 8000:8000 \
+	--env-file backend/.env \
+	llamactl-console:latest
+```
+
+Then open `http://localhost:8000`.

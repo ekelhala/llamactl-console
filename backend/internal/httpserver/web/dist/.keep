@@ -1,0 +1,1 @@
+placeholder for go:embed; Docker build overwrites this directory with frontend dist assets.

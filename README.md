@@ -28,7 +28,15 @@ Backend:
 
 ```sh
 cd backend
+cp config.example.yaml config.yaml
 make run
+```
+
+To use a different configuration file path:
+
+```sh
+cd backend
+go run ./cmd/server --config ./config.local.yaml
 ```
 
 Note: This project is still a work in progress. Not all APIs or features are implemented yet. 🚧

@@ -177,6 +177,8 @@ Expected backend configuration variables:
 - `APP_JWT_REFRESH_TTL`: Refresh token lifetime (for example `7d`).
 - `BOOTSTRAP_ADMIN_USERNAME`: Optional initial admin username override (default `admin`).
 - `BOOTSTRAP_ADMIN_PASSWORD`: Optional bootstrap password override for non-interactive provisioning.
+- `APP_CONFIG_FILE`: Optional YAML config file path when `--config` is not provided.
+- `--config`: Backend CLI option for configuration file path (default `config.yaml`).
 - `CORS_ALLOWED_ORIGIN`: Frontend origin allowed to call proxy.
 
 ## Security Baseline

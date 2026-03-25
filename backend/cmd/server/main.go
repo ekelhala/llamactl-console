@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -15,7 +17,9 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
+	configPath := parseConfigPath(os.Args[1:])
+
+	cfg, err := config.LoadFromEnvAndYAML(configPath)
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)
@@ -54,4 +58,26 @@ func main() {
 	}
 
 	logger.Info("server stopped", "uptime", time.Since(cfg.StartedAt).String())
+}
+
+func parseConfigPath(args []string) string {
+	flags := flag.NewFlagSet("server", flag.ExitOnError)
+	configPath := flags.String("config", "config.yaml", "Path to configuration file")
+	flags.Parse(args)
+
+	configFlagExplicitlySet := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "config" {
+			configFlagExplicitlySet = true
+		}
+	})
+	if configFlagExplicitlySet {
+		return *configPath
+	}
+
+	if envPath := strings.TrimSpace(os.Getenv("APP_CONFIG_FILE")); envPath != "" {
+		return envPath
+	}
+
+	return *configPath
 }

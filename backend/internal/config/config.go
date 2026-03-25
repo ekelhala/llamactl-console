@@ -21,7 +21,6 @@ type Config struct {
 	JWTRefreshTTL            time.Duration
 	BootstrapAdminUsername   string
 	BootstrapAdminPassword   string
-	CORSAllowedOrigin        string
 	ReadTimeout              time.Duration
 	WriteTimeout             time.Duration
 	IdleTimeout              time.Duration
@@ -42,7 +41,6 @@ func LoadFromEnv() (Config, error) {
 		JWTSigningKey:            strings.TrimSpace(os.Getenv("APP_JWT_SIGNING_KEY")),
 		BootstrapAdminUsername:   getEnvOrDefault("BOOTSTRAP_ADMIN_USERNAME", "admin"),
 		BootstrapAdminPassword:   strings.TrimSpace(os.Getenv("BOOTSTRAP_ADMIN_PASSWORD")),
-		CORSAllowedOrigin:        getEnvOrDefault("CORS_ALLOWED_ORIGIN", "http://localhost:5173"),
 		ReadTimeout:              mustDuration("HTTP_READ_TIMEOUT", "10s"),
 		WriteTimeout:             mustDuration("HTTP_WRITE_TIMEOUT", "15s"),
 		IdleTimeout:              mustDuration("HTTP_IDLE_TIMEOUT", "60s"),

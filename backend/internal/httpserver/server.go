@@ -39,7 +39,7 @@ func New(cfg config.Config, logger *slog.Logger) *http.Server {
 	handler := requestIDMiddleware(loggerMiddleware(logger, router))
 
 	return &http.Server{
-		Addr:         fmt.Sprintf(":%s", cfg.Port),
+		Addr:         fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,

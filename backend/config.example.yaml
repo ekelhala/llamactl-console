@@ -1,0 +1,20 @@
+server:
+  host: 127.0.0.1
+  port: "8000"
+  readTimeOut: "10s"
+  writeTimeOut: "15s"
+  idleTimeOut: "60s"
+  shutdownTimeOut: "10s"
+
+llamactl:
+  baseURL: "http://localhost:8080"
+
+security:
+  jwtAccessTTL: "15m"
+  jwtRefreshTTL: "168h"
+
+bootstrap:
+  adminUsername: "admin"
+
+logging:
+  level: "info"

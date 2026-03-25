@@ -5,11 +5,22 @@ This directory contains the Go proxy backend for `llamactl-console`.
 ## Quick Start
 
 1. Copy `.env.example` to `.env` and set required values.
-2. Run the service (it automatically loads variables from `.env`):
+2. (Optional) Copy `config.example.yaml` and set `APP_CONFIG_FILE` to its path.
+3. Start the service.
 
 ```bash
 make run
 ```
+
+Configuration precedence:
+- environment variables and `.env` values (highest priority)
+- YAML file values from `APP_CONFIG_FILE`
+- built-in defaults
+
+Sensitive values are intentionally not accepted from YAML and must come from env/.env:
+- `LLAMACTL_MANAGEMENT_API_KEY`
+- `APP_JWT_SIGNING_KEY`
+- `BOOTSTRAP_ADMIN_PASSWORD`
 
 Health endpoints:
 - `GET /api/health`
